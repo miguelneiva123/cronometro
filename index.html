@@ -2,31 +2,15 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Gestor de Projetos Cronômetro</title>
+  <title>Cronômetro HMIM</title>
   <script>
-    let projetos = [];
-    let projetoAtual = null;
     let count = 0;
     let total = 0;
     let interval = null;
-
-    function criarProjeto() {
-      const nomeProjeto = prompt("Digite o nome do projeto:");
-      if (nomeProjeto) {
-        projetoAtual = {
-          nome: nomeProjeto,
-          tempoTotal: 0,
-          laps: [],
-          horaInicio: new Date(),
-          horaFim: null
-        };
-        projetos.push(projetoAtual);
-        atualizarProjetos();
-      }
-    }
+    let tarefas = [];
 
     function start() {
-      if (interval || !projetoAtual) return;
+      if (interval) return;
       interval = setInterval(() => {
         count++;
         atualizarDisplay();
@@ -37,51 +21,36 @@
       if (!interval) return;
       clearInterval(interval);
       interval = null;
-      const descricao = prompt("Descrição desta tarefa?");
-      if (descricao && projetoAtual) {
-        projetoAtual.laps.push({
-          tempo: count,
-          descricao: descricao,
-          hora: new Date()
-        });
-        projetoAtual.tempoTotal += count;
+      const descricao = prompt("Descrição da tarefa:");
+      if (descricao) {
+        tarefas.push({ tempo: count, descricao });
+        total += count;
         count = 0;
         atualizarDisplay();
-        atualizarProjetos();
+        atualizarLista();
       }
-    }
-
-    function atualizarProjetos() {
-      const projetosList = document.getElementById("projetos");
-      projetosList.innerHTML = "";
-      projetos.forEach((projeto, index) => {
-        const li = document.createElement("li");
-        li.textContent = `${projeto.nome} - Tempo Total: ${projeto.tempoTotal} hmim`;
-        li.onclick = () => mostrarProjeto(index);
-        projetosList.appendChild(li);
-      });
-    }
-
-    function mostrarProjeto(index) {
-      const projeto = projetos[index];
-      let lapsTexto = projeto.laps.map(lap => `${lap.tempo} hmim - ${lap.descricao}`).join("\n");
-      alert(`Projeto: ${projeto.nome}\nTempo Total: ${projeto.tempoTotal} hmim\n\nLaps:\n${lapsTexto}`);
     }
 
     function atualizarDisplay() {
       document.getElementById("display").textContent = count.toString().padStart(4, '0');
-      if (projetoAtual) {
-        document.getElementById("tempoAcumulado").textContent = projetoAtual.tempoTotal.toString().padStart(4, '0');
-      }
+      document.getElementById("total").textContent = total.toString().padStart(4, '0');
+    }
+
+    function atualizarLista() {
+      const lista = document.getElementById("tarefas");
+      lista.innerHTML = "";
+      tarefas.forEach(t => {
+        const li = document.createElement("li");
+        li.textContent = `${t.tempo} hmim - ${t.descricao}`;
+        lista.appendChild(li);
+      });
     }
   </script>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 2rem; background: #f9f9f9; }
-    h1 { font-size: 3rem; margin-bottom: 0.5rem; }
+    body { font-family: sans-serif; text-align: center; padding: 2rem; background: #f2f2f2; }
+    h1 { font-size: 2.5rem; margin-bottom: 1rem; }
     button { font-size: 1.1rem; margin: 0.5rem; padding: 0.5rem 1rem; }
-    ul { list-style: none; padding: 0; }
-    li { background: #fff; margin: 0.5rem auto; max-width: 500px; padding: 0.5rem; border-left: 4px solid #008080; cursor: pointer; }
-    .info { margin: 1rem 0; font-weight: bold; }
+    .info { font-size: 1.2rem; margin: 1rem 0; }
     .fixed-lap {
       position: fixed;
       bottom: 20px;
@@ -97,22 +66,17 @@
       cursor: pointer;
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
+    ul { list-style: none; padding: 0; max-width: 600px; margin: 1rem auto; }
+    li { background: white; margin: 0.3rem 0; padding: 0.5rem; border-left: 4px solid #28a745; }
   </style>
 </head>
 <body>
-  <h1>Gestor de Projetos Cronômetro</h1>
-  <button onclick="criarProjeto()">Criar Projeto</button>
-  <button onclick="start()">Iniciar Cronômetro</button>
-  <button onclick="reset()">Resetar</button>
-  <div class="info">Tempo Acumulado: <span id="tempoAcumulado">0000</span> hmim</div>
-  <div id="projetos">
-    <h2>Projetos:</h2>
-    <ul></ul>
-  </div>
-
-  <h2>Visor Cronômetro:</h2>
-  <h1 id="display">0000</h1>
-
+  <h1>Cronômetro HMIM</h1>
+  <div class="info">Tempo atual: <span id="display">0000</span> hmim</div>
+  <div class="info">Tempo total: <span id="total">0000</span> hmim</div>
+  <button onclick="start()">Iniciar</button>
   <button class="fixed-lap" onclick="stop()">Adicionar Tarefa</button>
+
+  <ul id="tarefas"></ul>
 </body>
 </html>
