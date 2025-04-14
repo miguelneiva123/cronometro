@@ -2,69 +2,117 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Cronômetro HMIM</title>
-  <link rel="manifest" href="manifest.json">
+  <title>Gestor de Projetos Cronômetro</title>
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js');
-    }
-  </script>
-  <style>
-    body { font-family: sans-serif; text-align: center; padding: 2rem; }
-    h1 { font-size: 3rem; margin-bottom: 0.5rem; }
-    p, li { font-size: 1.2rem; }
-    button { font-size: 1.1rem; margin: 0.5rem; padding: 0.5rem 1rem; }
-    ul { list-style: none; padding: 0; }
-  </style>
-</head>
-<body>
-  <h1 id="display">0000</h1>
-  <button onclick="start()">Start</button>
-  <button onclick="lap()">Lap</button>
-  <button onclick="reset()">Resetar</button>
-
-  <p><strong>Tempo Acumulado:</strong> <span id="acumulado">0000</span> hmim</p>
-  <p><strong>Voltas Registradas:</strong></p>
-  <ul id="laps"></ul>
-
-  <script>
+    let projetos = [];
+    let projetoAtual = null;
     let count = 0;
     let total = 0;
     let interval = null;
 
-    function updateDisplay() {
-      document.getElementById('display').textContent = count.toString().padStart(4, '0');
-      document.getElementById('acumulado').textContent = total.toString().padStart(4, '0');
+    function criarProjeto() {
+      const nomeProjeto = prompt("Digite o nome do projeto:");
+      if (nomeProjeto) {
+        projetoAtual = {
+          nome: nomeProjeto,
+          tempoTotal: 0,
+          laps: [],
+          horaInicio: new Date(),
+          horaFim: null
+        };
+        projetos.push(projetoAtual);
+        atualizarProjetos();
+      }
     }
 
     function start() {
-      if (interval) return;
+      if (interval || !projetoAtual) return;
       interval = setInterval(() => {
         count++;
-        updateDisplay();
+        atualizarDisplay();
       }, 600);
     }
 
-    function lap() {
-      const li = document.createElement('li');
-      li.textContent = `Lap: ${count} hmim`;
-      document.getElementById('laps').appendChild(li);
-
-      total += count;
-      count = 0;
-      updateDisplay();
-    }
-
-    function reset() {
+    function stop() {
+      if (!interval) return;
       clearInterval(interval);
       interval = null;
-      count = 0;
-      total = 0;
-      document.getElementById('laps').innerHTML = '';
-      updateDisplay();
+      const descricao = prompt("Descrição desta tarefa?");
+      if (descricao && projetoAtual) {
+        projetoAtual.laps.push({
+          tempo: count,
+          descricao: descricao,
+          hora: new Date()
+        });
+        projetoAtual.tempoTotal += count;
+        count = 0;
+        atualizarDisplay();
+        atualizarProjetos();
+      }
     }
 
-    updateDisplay();
+    function atualizarProjetos() {
+      const projetosList = document.getElementById("projetos");
+      projetosList.innerHTML = "";
+      projetos.forEach((projeto, index) => {
+        const li = document.createElement("li");
+        li.textContent = `${projeto.nome} - Tempo Total: ${projeto.tempoTotal} hmim`;
+        li.onclick = () => mostrarProjeto(index);
+        projetosList.appendChild(li);
+      });
+    }
+
+    function mostrarProjeto(index) {
+      const projeto = projetos[index];
+      let lapsTexto = projeto.laps.map(lap => `${lap.tempo} hmim - ${lap.descricao}`).join("\n");
+      alert(`Projeto: ${projeto.nome}\nTempo Total: ${projeto.tempoTotal} hmim\n\nLaps:\n${lapsTexto}`);
+    }
+
+    function atualizarDisplay() {
+      document.getElementById("display").textContent = count.toString().padStart(4, '0');
+      if (projetoAtual) {
+        document.getElementById("tempoAcumulado").textContent = projetoAtual.tempoTotal.toString().padStart(4, '0');
+      }
+    }
   </script>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 2rem; background: #f9f9f9; }
+    h1 { font-size: 3rem; margin-bottom: 0.5rem; }
+    button { font-size: 1.1rem; margin: 0.5rem; padding: 0.5rem 1rem; }
+    ul { list-style: none; padding: 0; }
+    li { background: #fff; margin: 0.5rem auto; max-width: 500px; padding: 0.5rem; border-left: 4px solid #008080; cursor: pointer; }
+    .info { margin: 1rem 0; font-weight: bold; }
+    .fixed-lap {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <h1>Gestor de Projetos Cronômetro</h1>
+  <button onclick="criarProjeto()">Criar Projeto</button>
+  <button onclick="start()">Iniciar Cronômetro</button>
+  <button onclick="reset()">Resetar</button>
+  <div class="info">Tempo Acumulado: <span id="tempoAcumulado">0000</span> hmim</div>
+  <div id="projetos">
+    <h2>Projetos:</h2>
+    <ul></ul>
+  </div>
+
+  <h2>Visor Cronômetro:</h2>
+  <h1 id="display">0000</h1>
+
+  <button class="fixed-lap" onclick="stop()">Adicionar Tarefa</button>
 </body>
 </html>
