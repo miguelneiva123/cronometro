@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cronômetro HMIM</title>
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+  </script>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 2rem; }
+    h1 { font-size: 3rem; margin-bottom: 0.5rem; }
+    p, li { font-size: 1.2rem; }
+    button { font-size: 1.1rem; margin: 0.5rem; padding: 0.5rem 1rem; }
+    ul { list-style: none; padding: 0; }
+  </style>
+</head>
+<body>
+  <h1 id="display">0000</h1>
+  <button onclick="start()">Start</button>
+  <button onclick="lap()">Lap</button>
+  <button onclick="reset()">Resetar</button>
+
+  <p><strong>Tempo Acumulado:</strong> <span id="acumulado">0000</span> hmim</p>
+  <p><strong>Voltas Registradas:</strong></p>
+  <ul id="laps"></ul>
+
+  <script>
+    let count = 0;
+    let total = 0;
+    let interval = null;
+
+    function updateDisplay() {
+      document.getElementById('display').textContent = count.toString().padStart(4, '0');
+      document.getElementById('acumulado').textContent = total.toString().padStart(4, '0');
+    }
+
+    function start() {
+      if (interval) return;
+      interval = setInterval(() => {
+        count++;
+        updateDisplay();
+      }, 600);
+    }
+
+    function lap() {
+      const li = document.createElement('li');
+      li.textContent = `Lap: ${count} hmim`;
+      document.getElementById('laps').appendChild(li);
+
+      total += count;
+      count = 0;
+      updateDisplay();
+    }
+
+    function reset() {
+      clearInterval(interval);
+      interval = null;
+      count = 0;
+      total = 0;
+      document.getElementById('laps').innerHTML = '';
+      updateDisplay();
+    }
+
+    updateDisplay();
+  </script>
+</body>
+</html>
