@@ -1,34 +1,77 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Cronômetro HMIM</title>
+  <meta charset="UTF-8" />
+  <title></title>
   <script>
     let count = 0;
     let total = 0;
     let interval = null;
-    let tarefas = [];
+    let laps = [];
+    let lapIndex = 1;
+    let lapStart = null;
+    let sessionStart = null;
+    let sessionEnd = null;
 
-    function start() {
+    function formatTime(date) {
+      if (!date) return "--:--";
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return hours + ":" + minutes;
+    }
+
+    function startSession() {
       if (interval) return;
+      if (!sessionStart) {
+        sessionStart = new Date();
+        lapStart = new Date();
+      }
       interval = setInterval(() => {
         count++;
         atualizarDisplay();
       }, 600);
+      atualizarDisplay();
+      atualizarSessionInfo();
     }
 
-    function stop() {
+    function stopSession() {
       if (!interval) return;
       clearInterval(interval);
       interval = null;
-      const descricao = prompt("Descrição da tarefa:");
-      if (descricao) {
-        tarefas.push({ tempo: count, descricao });
-        total += count;
-        count = 0;
-        atualizarDisplay();
-        atualizarLista();
-      }
+      sessionEnd = new Date();
+      atualizarSessionInfo();
+    }
+
+    function lap() {
+      if (!interval) return;
+      let now = new Date();
+      laps.push({
+        numero: lapIndex,
+        tempo: count,
+        inicio: lapStart,
+        fim: now
+      });
+      total += count;
+      count = 0;
+      lapIndex++;
+      lapStart = now;
+      atualizarDisplay();
+      atualizarLaps();
+    }
+
+    function reset() {
+      clearInterval(interval);
+      interval = null;
+      count = 0;
+      total = 0;
+      laps = [];
+      lapIndex = 1;
+      sessionStart = null;
+      sessionEnd = null;
+      lapStart = null;
+      atualizarDisplay();
+      atualizarLaps();
+      atualizarSessionInfo();
     }
 
     function atualizarDisplay() {
@@ -36,47 +79,127 @@
       document.getElementById("total").textContent = total.toString().padStart(4, '0');
     }
 
-    function atualizarLista() {
-      const lista = document.getElementById("tarefas");
+    function atualizarLaps() {
+      const lista = document.getElementById("laps");
       lista.innerHTML = "";
-      tarefas.forEach(t => {
+      laps.slice().reverse().forEach(l => {
         const li = document.createElement("li");
-        li.textContent = `${t.tempo} hmim - ${t.descricao}`;
+        li.innerHTML =
+          "<span class='lap-result'>#" + l.numero + " - " + l.tempo + " hmim</span> " +
+          "<span class='lap-time'>(Início: " + formatTime(l.inicio) +
+          " | Fim: " + formatTime(l.fim) + ")</span>";
         lista.appendChild(li);
       });
     }
+
+    function atualizarSessionInfo() {
+      document.getElementById("sessionStart").textContent = formatTime(sessionStart);
+      document.getElementById("sessionEnd").textContent = formatTime(sessionEnd);
+    }
   </script>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 2rem; background: #f2f2f2; }
-    h1 { font-size: 2.5rem; margin-bottom: 1rem; }
-    button { font-size: 1.1rem; margin: 0.5rem; padding: 0.5rem 1rem; }
-    .info { font-size: 1.2rem; margin: 1rem 0; }
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 1rem;
+      background: #ffffff;
+      font-size: 1rem;
+    }
+
+    /* Destaque com menos tamanho para os títulos */
+    .label {
+      font-size: 1rem;
+      color: #333;
+    }
+
+    /* Destaque forte para os números */
+    .value {
+      font-size: 2.5rem;
+      font-weight: bold;
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #111;
+    }
+
+    .session-info {
+      font-size: 0.8rem;
+      margin: 0.3rem 0;
+    }
+
+    button {
+      font-size: 1rem;
+      margin: 0.3rem;
+      padding: 0.5rem 1rem;
+    }
+
     .fixed-lap {
       position: fixed;
-      bottom: 20px;
+      bottom: 10px;
       left: 50%;
       transform: translateX(-50%);
       background-color: #28a745;
       color: white;
       border: none;
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 0.8rem 1.5rem;
-      font-size: 1.2rem;
+      font-size: 1.3rem;
       font-weight: bold;
       cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
-    ul { list-style: none; padding: 0; max-width: 600px; margin: 1rem auto; }
-    li { background: white; margin: 0.3rem 0; padding: 0.5rem; border-left: 4px solid #28a745; }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 1rem auto;
+      max-width: 800px;
+      text-align: left;
+    }
+
+    li {
+      background: #f8f8f8;
+      margin: 0.5rem 0;
+      padding: 0.7rem 1rem;
+      border-left: 4px solid #28a745;
+      font-size: 1rem;
+    }
+
+    .lap-result {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #222;
+    }
+
+    .lap-time {
+      font-size: 0.75rem;
+      color: #555;
+      margin-left: 0.5rem;
+    }
   </style>
 </head>
 <body>
-  <h1>Cronômetro HMIM</h1>
-  <div class="info">Tempo atual: <span id="display">0000</span> hmim</div>
-  <div class="info">Tempo total: <span id="total">0000</span> hmim</div>
-  <button onclick="start()">Iniciar</button>
-  <button class="fixed-lap" onclick="stop()">Adicionar Tarefa</button>
+  <!-- Tempos com destaque -->
+  <div class="label">Atual</div>
+  <span id="display" class="value">0000</span>
 
-  <ul id="tarefas"></ul>
+  <div class="label">Total</div>
+  <span id="total" class="value">0000</span>
+
+  <!-- Sessão -->
+  <div class="session-info">Sessão Início: <span id="sessionStart">--:--</span></div>
+  <div class="session-info">Sessão Fim: <span id="sessionEnd">--:--</span></div>
+
+  <!-- Botões -->
+  <div class="controls">
+    <button onclick="startSession()">Start</button>
+    <button onclick="stopSession()">Stop Sessão</button>
+    <button onclick="reset()">Resetar</button>
+  </div>
+
+  <!-- Lista de laps -->
+  <ul id="laps"></ul>
+
+  <!-- Botão fixo verde -->
+  <button class="fixed-lap" onclick="lap()">Adicionar Tarefa</button>
 </body>
 </html>
