@@ -15,11 +15,17 @@
     let sessionEnd = null;
     let lastLapTime = null;
 
-    // Função para formatar o tempo em hmim (100 minutos por hora)
+    // Função para formatar o tempo em hmin (100 minutos por hora)
     function formatTimeHMIM(minutes) {
-      const hours = Math.floor(minutes / 100);
-      const mins = minutes % 100;
-      return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+      return String(minutes).padStart(5, '0'); // Exibe como 00000
+    }
+
+    // Função para formatar horas em hh:mm:ss
+    function formatTimeHHMMSS(date) {
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${hours}:${minutes}:${seconds}`;
     }
 
     function startSession() {
@@ -90,15 +96,15 @@
         const li = document.createElement("li");
         li.innerHTML =
           "<span class='lap-result'>#" + l.numero + " - " + formatTimeHMIM(l.tempo) + "</span> " +
-          "<span class='lap-time'>(Início: " + formatTimeHMIM(Math.floor((l.inicio - sessionStart) / 60000)) +
-          " | Fim: " + formatTimeHMIM(Math.floor((l.fim - sessionStart) / 60000)) + ")</span>";
+          "<span class='lap-time'>(Início: " + formatTimeHHMMSS(l.inicio) +
+          " | Fim: " + formatTimeHHMMSS(l.fim) + ")</span>";
         lista.appendChild(li);
       });
     }
 
     function atualizarSessionInfo() {
-      document.getElementById("sessionStart").textContent = formatTimeHMIM(Math.floor((sessionStart ? (new Date() - sessionStart) / 60000 : 0)));
-      document.getElementById("sessionEnd").textContent = sessionEnd ? formatTimeHMIM(Math.floor((sessionEnd - sessionStart) / 60000)) : "--:--";
+      document.getElementById("sessionStart").textContent = formatTimeHHMMSS(sessionStart || new Date(0));
+      document.getElementById("sessionEnd").textContent = sessionEnd ? formatTimeHHMMSS(sessionEnd) : "--:--:--";
     }
 
     // Verifica e ajusta o cronômetro ao reiniciar a página (usando a hora de início)
@@ -134,13 +140,14 @@
       font-family: sans-serif;
       text-align: center;
       padding: 1rem;
-      background: #ffffff;
+      background: black;
+      color: white;
       font-size: 1rem;
     }
 
     .label {
       font-size: 0.9rem;
-      color: #333;
+      color: #ccc;
     }
 
     .value {
@@ -148,7 +155,7 @@
       font-weight: bold;
       display: block;
       margin-bottom: 0.5rem;
-      color: #111;
+      color: white;
     }
 
     .session-info {
@@ -160,6 +167,15 @@
       font-size: 1rem;
       margin: 0.3rem;
       padding: 0.5rem 1rem;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #218838;
     }
 
     .fixed-lap {
@@ -187,7 +203,7 @@
     }
 
     li {
-      background: #f8f8f8;
+      background: #333;
       margin: 0.5rem 0;
       padding: 0.7rem 1rem;
       border-left: 4px solid #28a745;
@@ -197,12 +213,12 @@
     .lap-result {
       font-size: 1.6rem;
       font-weight: bold;
-      color: #222;
+      color: white;
     }
 
     .lap-time {
-      font-size: 0.65rem;
-      color: #555;
+      font-size: 0.75rem;
+      color: #aaa;
       margin-left: 0.5rem;
     }
 
@@ -230,7 +246,7 @@
       }
 
       .lap-time {
-        font-size: 0.8rem;
+        font-size: 0.9rem;
       }
 
       .session-info {
@@ -245,14 +261,14 @@
   </style>
 </head>
 <body>
-  <div class="label">Atual</div>
-  <span id="display" class="value">0000</span>
+  <div class="label">Atual (hmin)</div>
+  <span id="display" class="value">00000</span>
 
-  <div class="label">Total</div>
-  <span id="total" class="value">0000</span>
+  <div class="label">Total (hmin)</div>
+  <span id="total" class="value">00000</span>
 
-  <div class="session-info">Sessão Início: <span id="sessionStart">--:--</span></div>
-  <div class="session-info">Sessão Fim: <span id="sessionEnd">--:--</span></div>
+  <div class="session-info">Sessão Início: <span id="sessionStart">00:00:00</span></div>
+  <div class="session-info">Sessão Fim: <span id="sessionEnd">00:00:00</span></div>
 
   <div class="controls">
     <button onclick="startSession()">Start</button>
