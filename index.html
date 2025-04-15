@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title></title>
+  <title>Cronômetro de Tarefas</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script>
     let count = 0;
@@ -13,16 +13,17 @@
     let lapStart = null;
     let sessionStart = null;
     let sessionEnd = null;
+    let lastLapTime = null;
 
-    function formatTime(date) {
-      if (!date) return "--:--";
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      return hours + ":" + minutes;
+    // Função para formatar o tempo em hmim (100 minutos por hora)
+    function formatTimeHMIM(minutes) {
+      const hours = Math.floor(minutes / 100);
+      const mins = minutes % 100;
+      return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
     }
 
     function startSession() {
-      if (interval) return;
+      if (interval) return; // Se já está a contar, não faz nada
       if (!sessionStart) {
         sessionStart = new Date();
         lapStart = new Date();
@@ -30,7 +31,7 @@
       interval = setInterval(() => {
         count++;
         atualizarDisplay();
-      }, 600);
+      }, 600);  // Incrementa a cada 600ms (aproximadamente 0.1 minutos)
       atualizarDisplay();
       atualizarSessionInfo();
     }
@@ -56,6 +57,7 @@
       count = 0;
       lapIndex++;
       lapStart = now;
+      lastLapTime = new Date();
       atualizarDisplay();
       atualizarLaps();
     }
@@ -70,14 +72,15 @@
       sessionStart = null;
       sessionEnd = null;
       lapStart = null;
+      lastLapTime = null;
       atualizarDisplay();
       atualizarLaps();
       atualizarSessionInfo();
     }
 
     function atualizarDisplay() {
-      document.getElementById("display").textContent = count.toString().padStart(4, '0');
-      document.getElementById("total").textContent = total.toString().padStart(4, '0');
+      document.getElementById("display").textContent = formatTimeHMIM(count);
+      document.getElementById("total").textContent = formatTimeHMIM(total);
     }
 
     function atualizarLaps() {
@@ -86,16 +89,44 @@
       laps.slice().reverse().forEach(l => {
         const li = document.createElement("li");
         li.innerHTML =
-          "<span class='lap-result'>#" + l.numero + " - " + l.tempo + " hmim</span> " +
-          "<span class='lap-time'>(Início: " + formatTime(l.inicio) +
-          " | Fim: " + formatTime(l.fim) + ")</span>";
+          "<span class='lap-result'>#" + l.numero + " - " + formatTimeHMIM(l.tempo) + "</span> " +
+          "<span class='lap-time'>(Início: " + formatTimeHMIM(Math.floor((l.inicio - sessionStart) / 60000)) +
+          " | Fim: " + formatTimeHMIM(Math.floor((l.fim - sessionStart) / 60000)) + ")</span>";
         lista.appendChild(li);
       });
     }
 
     function atualizarSessionInfo() {
-      document.getElementById("sessionStart").textContent = formatTime(sessionStart);
-      document.getElementById("sessionEnd").textContent = formatTime(sessionEnd);
+      document.getElementById("sessionStart").textContent = formatTimeHMIM(Math.floor((sessionStart ? (new Date() - sessionStart) / 60000 : 0)));
+      document.getElementById("sessionEnd").textContent = sessionEnd ? formatTimeHMIM(Math.floor((sessionEnd - sessionStart) / 60000)) : "--:--";
+    }
+
+    // Verifica e ajusta o cronômetro ao reiniciar a página (usando a hora de início)
+    window.onload = function() {
+      if (sessionStorage.getItem('startTime')) {
+        sessionStart = new Date(parseInt(sessionStorage.getItem('startTime')));
+        lapStart = new Date(parseInt(sessionStorage.getItem('lapStart')));
+        count = parseInt(sessionStorage.getItem('currentTime'));
+        total = parseInt(sessionStorage.getItem('totalTime'));
+        laps = JSON.parse(sessionStorage.getItem('laps') || "[]");
+        lapIndex = parseInt(sessionStorage.getItem('lapIndex')) || 1;
+        lastLapTime = sessionStorage.getItem('lastLapTime') ? new Date(parseInt(sessionStorage.getItem('lastLapTime'))) : null;
+        atualizarDisplay();
+        atualizarLaps();
+        atualizarSessionInfo();
+        if (sessionStart) startSession();
+      }
+    }
+
+    // Salva o estado do cronômetro (horas, laps, etc) para restaurar após fechar a página ou reiniciar
+    window.onbeforeunload = function() {
+      sessionStorage.setItem('startTime', sessionStart ? sessionStart.getTime() : 0);
+      sessionStorage.setItem('lapStart', lapStart ? lapStart.getTime() : 0);
+      sessionStorage.setItem('currentTime', count);
+      sessionStorage.setItem('totalTime', total);
+      sessionStorage.setItem('laps', JSON.stringify(laps));
+      sessionStorage.setItem('lapIndex', lapIndex);
+      sessionStorage.setItem('lastLapTime', lastLapTime ? lastLapTime.getTime() : 0);
     }
   </script>
   <style>
